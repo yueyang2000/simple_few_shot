@@ -3,6 +3,7 @@
 import torch
 import torch.nn as nn
 import torchvision.models as models
+import torchvision
 import os 
 
 model_urls = {
@@ -17,7 +18,7 @@ class BackBone(models.AlexNet):
             self.load_state_dict(torch.load(model_path))
         else:        
             print('Downloading model')
-            state_dict = torch.utils.load_state_dict_from_url(model_urls['alexnet'], progress=True)
+            state_dict = torchvision.utils.load_state_dict_from_url(model_urls['alexnet'], progress=True)
             self.load_state_dict(state_dict)
         if freeze:
             for param in self.parameters():
