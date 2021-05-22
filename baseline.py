@@ -26,7 +26,7 @@ def get_all_features(split='train', load=True):
     return features, dset.get_labels()
 
 if __name__ == '__main__':
-    # print('Machine Learning Baselines')
+    print('Machine Learning Baselines')
     # X_train, y_train = get_all_features(split='train')
     # X_test, y_test = get_all_features(split='test')
     # clf = KNeighborsClassifier(n_neighbors=10)
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     criterion = torch.nn.CrossEntropyLoss()
     train_data = Caltech256(split='train')
     dataloader = torch.utils.data.DataLoader(dataset=train_data, batch_size=16, shuffle=True)
-    epochs = 32
+    epochs = 10
     for epoch in tqdm(range(epochs)):
         for index, (img, label) in enumerate(dataloader):
             pred = model(img)

@@ -28,7 +28,7 @@ class BackBone(models.AlexNet):
 class FineTuner(nn.Module):
     def __init__(self, num_classes=50):
         super().__init__()
-        self.backbone = BackBone(freeze=False)
+        self.backbone = BackBone(freeze=True)
         self.clf = nn.Linear(4096, num_classes)
     def forward(self, x):
         return self.clf(self.backbone(x))
