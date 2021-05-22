@@ -28,10 +28,13 @@ class BackBone(models.AlexNet):
 class FineTuner(nn.Module):
     def __init__(self, num_classes=50):
         super().__init__()
-        self.backbone = BackBone(freeze=True)
+        self.backbone = BackBone(freeze=False)
+        # self.dropout = nn.Dropout(p=0.9)
         self.clf = nn.Linear(4096, num_classes)
     def forward(self, x):
-        return self.clf(self.backbone(x))
+        x = self.backbone(x)
+        # x = self.dropout(x)
+        return self.clf(x)
 
 
 class ModelRegression(nn.Module):

@@ -44,6 +44,7 @@ if __name__ == '__main__':
     train_data = Caltech256(split='train')
     dataloader = torch.utils.data.DataLoader(dataset=train_data, batch_size=16, shuffle=True)
     epochs = 10
+    model.train()
     for epoch in tqdm(range(epochs)):
         for index, (img, label) in enumerate(dataloader):
             pred = model(img)
@@ -55,6 +56,7 @@ if __name__ == '__main__':
     # test
     test_data = Caltech256(split='test')
     dataloader = torch.utils.data.DataLoader(dataset=test_data, batch_size=len(test_data))
+    model.eval()
     with torch.no_grad():
         for index, (img, label) in enumerate(dataloader):
             pred = model(img)
