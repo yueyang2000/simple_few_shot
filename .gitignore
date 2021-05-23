@@ -5,3 +5,5 @@ __pycache__/
 
 pretrained/alexnet-owt-4df8aa71.pth
 data/
+
+.DS_Store

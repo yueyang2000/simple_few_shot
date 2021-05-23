@@ -12,11 +12,11 @@ model_urls = {
 
 class BackBone(models.AlexNet):
     def __init__(self, model_path='./pretrained/alexnet-owt-4df8aa71.pth', freeze=True):
-        super().__init__() 
+        super().__init__()
         if os.path.exists(model_path):
             print('Loading local checkpoint')
             self.load_state_dict(torch.load(model_path))
-        else:        
+        else:
             print('Downloading model')
             state_dict = torchvision.utils.load_state_dict_from_url(model_urls['alexnet'], progress=True)
             self.load_state_dict(state_dict)
@@ -43,9 +43,20 @@ class ModelRegression(nn.Module):
             nn.Dropout(inplace=True),
             nn.Linear(4096, 4096)
         )
+
     def forward(self, x):
         # TODO add model regression
-        return x 
+        F = nn.Sequential(
+            nn.Linear(1, 1),
+            nn.ReLU(),
+            nn.Linear(1, 1),
+            nn.ReLU(),
+            nn.Linear(1, 1),
+            nn.ReLU(),
+            nn.Linear(1, 1),
+            nn.ReLU(),
+        )
+        return F(x)
 
 
 class ProtoNetwork(nn.Module):
