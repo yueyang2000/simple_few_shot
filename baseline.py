@@ -4,12 +4,11 @@ import torch
 from tqdm import tqdm 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
-
 from model import BackBone
 from model import FineTuner
 from dataset import Caltech256 
 
-net = BackBone()
+# net = BackBone()
 
 def get_all_features(split='train', load=True):
     dset = Caltech256(split=split)
@@ -42,26 +41,30 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = torch.nn.CrossEntropyLoss()
     train_data = Caltech256(split='train')
-    dataloader = torch.utils.data.DataLoader(dataset=train_data, batch_size=16, shuffle=True)
+    trainloader = torch.utils.data.DataLoader(dataset=train_data, batch_size=16, shuffle=True)
+    test_data = Caltech256(split='test')
+    testloader = torch.utils.data.DataLoader(dataset=test_data, batch_size=len(test_data))
     epochs = 8
-    model.train()
-    for epoch in tqdm(range(epochs)):
-        for index, (img, label) in enumerate(dataloader):
+    
+    best_acc = 0
+    for epoch in range(epochs):
+        model.train()
+        for index, (img, label) in tqdm(enumerate(trainloader)):
             pred = model(img)
             loss = criterion(pred, label.long())
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+        model.eval()
+        with torch.no_grad():
+            for index, (img, label) in enumerate(testloader):
+                pred = model(img)
+                _, pred = torch.max(pred.data, 1)
+                total = len(test_data)
+                correct = (pred == label).sum().item()
+                acc = correct / total
+                print(f'Accuracy: {acc}')
+                if acc > best_acc:
+                    best_acc = acc
 
-    # test
-    test_data = Caltech256(split='test')
-    dataloader = torch.utils.data.DataLoader(dataset=test_data, batch_size=len(test_data))
-    model.eval()
-    with torch.no_grad():
-        for index, (img, label) in enumerate(dataloader):
-            pred = model(img)
-            _, pred = torch.max(pred.data, 1)
-            total = len(test_data)
-            correct = (pred == label).sum().item()
-            acc = correct / total
-            print(f'Accuracy: {acc}')
+    print('Best acc:', best_acc)
