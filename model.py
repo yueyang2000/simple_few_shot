@@ -71,18 +71,18 @@ def euclidean_dist(x, y):
     return 
 
 class ProtoNetwork(nn.Module):
-    def __init__(self, x_dim=1, hid_dim=64, z_dim=64):
+    def __init__(self, x_dim=1, hid_dim=64):
         super(ProtoNetwork, self).__init__()
+        self.backbone = BackBone(freeze=True)
         self.encoder = nn.Sequential(
             conv_block(x_dim,hid_dim),
             conv_block(hid_dim, hid_dim),
             conv_block(hid_dim, hid_dim),
-            conv_block(hid_dim, z_dim),
+            conv_block(hid_dim, hid_dim),
         )
     def forward(self, x):
-        # TODO prototype network
-        x = self.encoder(x)
-        return x.view(x.size(0), -1)
+        # TODO: Add proto net
+        return self.backbone(x)
 
     def loss(self, y):
         n_class = len(torch.unique(y))

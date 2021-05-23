@@ -1,11 +1,13 @@
 import os 
 from PIL import Image 
 import numpy as np 
+import torch
 from torchvision import transforms
 from torchvision.datasets.vision import VisionDataset
 
 class Caltech256(VisionDataset):
     def __init__(self, root_dir='./data/training', split='train',n_shot=5, transform=None):
+        self.num_classes = 50
         self.n_shot = n_shot
         self.split = split
         self._read_all(root_dir)
@@ -41,15 +43,35 @@ class Caltech256(VisionDataset):
                 self.labels += cls_labels[self.n_shot:]
 
         self.labels = np.asarray(self.labels)
+        self.seed = np.random.RandomState(0)
 
     def __getitem__(self, index: int):
         return self.transform(self.data[index]), self.labels[index]
+
+    def get(self, class_id, sample_id):
+        return self.__getitem__(class_id * self.n_shot + sample_id)
     
     def __len__(self):
         return len(self.data)
     
     def get_labels(self):
         return self.labels
+    
+    def sample_proto_batch(self, n_class, n_support):
+        choices = self.seed.permutation(50)[:n_class]
+        support = []
+        query = []
+        for k in choices:
+            perm = self.seed.permutation(np.arange(self.n_shot))
+            support_choices = perm[:n_support]
+            query_choices = perm[n_support:]
+            for s in support_choices:
+                support.append(self.get(k, s)[0])
+            for q in query_choices:
+                query.append(self.get(k, q)[0])
+        return torch.stack(support), torch.stack(query)
+
+
 
 
 if __name__ == '__main__':

@@ -13,28 +13,25 @@ from model import ProtoNetwork
 if __name__ == '__main__':
 
     model = ProtoNetwork() 
-    train_data = Caltech256(split='train')
-    # a sampler is missing
-    dataloader = torch.utils.data.Dataloader(train_data)
+    trainset = Caltech256(split='train')
+
     optimizer = torch.optim.Adam(params=model.parameters(), lr=0.001)
     
     #train
     epochs = 10
+    episode_per_epoch = 10
+    n_class = 30
+    n_support = 3
     train_loss = []
     for epoch in range(epochs):
         print('===epoch:{}==='.format(epoch))
-        tr_iter = iter(dataloader)
         model.train()
-        for batch in tqdm(tr_iter):
-            optimizer.zero_grad()
-            x, y = batch
-            model_output = model(x)
-            loss = model.loss(model_output, y)
-            loss.backward()
-            optimizer.step()
-            train_loss.append(loss.item())
-        avg_loss = np.mean(train_loss)
-
+        for epi in range(episode_per_epoch):
+            support, query = trainset.sample_proto_batch(n_class, n_support)
+            support_embed, query_embed = model(support), model(query)
+            # TODO: compute proto loss
+            break
+        break
 
 
 
