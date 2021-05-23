@@ -2,6 +2,7 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torchvision.models as models
 import torchvision
 import os 
@@ -28,14 +29,15 @@ class BackBone(models.AlexNet):
 class FineTuner(nn.Module):
     def __init__(self, num_classes=50):
         super().__init__()
-        self.backbone = BackBone(freeze=False)
+        self.backbone = BackBone(freeze=True)
         # self.dropout = nn.Dropout(p=0.9)
         self.clf = nn.Linear(4096, num_classes)
     def forward(self, x):
         x = self.backbone(x)
+        x = self.clf(x)
+        out = F.softmax(x, dim=1)
         # x = self.dropout(x)
-        return self.clf(x)
-
+        return out
 
 class ModelRegression(nn.Module):
     def __init__(self, input_dim=4096):

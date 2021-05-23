@@ -43,7 +43,7 @@ if __name__ == '__main__':
     criterion = torch.nn.CrossEntropyLoss()
     train_data = Caltech256(split='train')
     dataloader = torch.utils.data.DataLoader(dataset=train_data, batch_size=16, shuffle=True)
-    epochs = 10
+    epochs = 8
     model.train()
     for epoch in tqdm(range(epochs)):
         for index, (img, label) in enumerate(dataloader):
