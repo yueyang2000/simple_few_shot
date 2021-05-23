@@ -5,7 +5,7 @@ import torch.nn as nn
 import torchvision.models as models
 import torchvision
 import os 
-
+import torch.nn.functional as F
 model_urls = {
     'alexnet': 'https://download.pytorch.org/models/alexnet-owt-4df8aa71.pth',
 }
@@ -58,7 +58,17 @@ def conv_block(in_channels, out_channels):
         nn.ReLU(),
         nn.MaxPool2d(2)
     )
-    
+
+def euclidean_dist(x, y):
+    # x:n×d
+    # y:m×d
+    n = x.size(0)
+    d = x.size(1)
+    m = y.size(0)
+    assert y.size(1) == d
+    x = x.unsqueeze(1).expand(n, m, d)
+    y = y.unsqueeze(0).expand(n, m, d)
+    return 
 
 class ProtoNetwork(nn.Module):
     def __init__(self, x_dim=1, hid_dim=64, z_dim=64):
@@ -73,6 +83,28 @@ class ProtoNetwork(nn.Module):
         # TODO prototype network
         x = self.encoder(x)
         return x.view(x.size(0), -1)
+
+    def loss(self, y):
+        n_class = len(torch.unique(y))
+        n_support = 1
+        n_query = 1
+
+        target_inds = torch.arange(0, n_class)
+        target_inds = target_inds.view(n_class, 1, 1)
+        target_inds = target_inds.expand(n_class, n_query, 1).long()
+        # support_indices
+        # query_indices
+        # prototypes
+        # query_samples
+        dists = euclidean_dist(query_samples, prototypes)
+
+        log_p_y = F.log_softmax(-dists, dim=1).view(n_class, n_query, -1)
+        loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
+
+        _, y_hat = log_p_y.max(2)
+        # acc_val = torch.eq(y_hat, target_inds.squeeze()).float().mean()
+        return loss_val
+
 
 if __name__ == '__main__':
     bb = BackBone()
