@@ -13,7 +13,8 @@ class Caltech256(VisionDataset):
         self._read_all(root_dir)
         if transform is None:
             self.transform = transforms.Compose([
-                transforms.Resize((224,224)),
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ])
@@ -57,6 +58,7 @@ class Caltech256(VisionDataset):
     def get_labels(self):
         return self.labels
     
+    
     def sample_proto_batch(self, n_class, n_support):
         choices = self.seed.permutation(50)[:n_class]
         support = []
@@ -70,6 +72,14 @@ class Caltech256(VisionDataset):
             for q in query_choices:
                 query.append(self.get(k, q)[0])
         return torch.stack(support), torch.stack(query)
+
+    def full_proto_batch(self):
+        n_sample = len(self.data) // self.num_classes
+        support = []
+        for k in range(self.num_classes):
+            for s in range(n_sample):
+                support.append(self.get(k,s)[0])
+        return torch.stack(support)
 
 
 
