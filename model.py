@@ -71,12 +71,13 @@ class ProtoNetwork(nn.Module):
         #     conv_block(hid_dim, hid_dim),
         # )
         self.bb = BackBone(freeze=True)
-        self.encoder = nn.Sequential(
-            nn.Linear(4096, 4096),
-            nn.ReLU(),
-            nn.Dropout(),
-            nn.Linear(4096, 4096)
-        )
+        # self.encoder = nn.Sequential(
+        #     nn.Linear(4096, 4096),
+        #     nn.ReLU(),
+        #     nn.Dropout(),
+        #     nn.Linear(4096, 4096)
+        # )
+        self.encoder = nn.Linear(4096, 4096)
     def forward(self, x):
         x = self.encoder(self.bb(x))
         return x.view(x.shape[0], -1)

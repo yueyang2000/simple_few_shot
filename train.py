@@ -55,4 +55,4 @@ if __name__ == '__main__':
             if acc > best_acc:
                 best_acc = acc 
     print('Best Acc =', round(best_acc, 4))
-    # Best Acc = 0.696
+    # Best Acc = 0.72
