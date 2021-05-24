@@ -35,28 +35,22 @@ class FineTuner(nn.Module):
 
 
 class ModelRegression(nn.Module):
-    def __init__(self, input_dim=4096):
+    def __init__(self, in_dim=4097):
         super().__init__()
-        self.backbone = BackBone()
-        self.transform = nn.Sequential(
-            nn.Linear(4096, 4096),
-            nn.Dropout(inplace=True),
-            nn.Linear(4096, 4096)
+        slope = 0.01 # hyperpara
+        self.model = nn.Sequential(
+            nn.Linear(in_dim, 6144),
+            nn.LeakyReLU(slope),
+            nn.Linear(6144, 5120),
+            nn.LeakyReLU(slope),
+            nn.Linear(5120, 4097),
+            nn.LeakyReLU(slope),
+            nn.Linear(4097, in_dim)
         )
-
+    
     def forward(self, x):
-        # TODO add model regression
-        F = nn.Sequential(
-            nn.Linear(1, 1),
-            nn.ReLU(),
-            nn.Linear(1, 1),
-            nn.ReLU(),
-            nn.Linear(1, 1),
-            nn.ReLU(),
-            nn.Linear(1, 1),
-            nn.ReLU(),
-        )
-        return F(x)
+        out = self.model(x)
+        return out
 
 
 class ProtoNetwork(nn.Module):
@@ -68,6 +62,7 @@ class ProtoNetwork(nn.Module):
         return x
 
 if __name__ == '__main__':
-    bb = BackBone()
-    x = torch.ones((1,3, 256, 256))
-    print(bb(x).shape)
+    # bb = BackBone()
+    # x = torch.ones((1,3, 256, 256))
+    # print(bb(x).shape)
+    m = ModelRegression()
