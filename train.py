@@ -14,9 +14,12 @@ import argparse
 
 from model import ModelRegression, BackBone
 
+import warnings
+warnings.filterwarnings("ignore")
+
 N = 10
 S = 5
-M = 10
+M = 100
 rps = [-2,-1,0,1,2]
 
 class BaseFeature:
@@ -38,6 +41,7 @@ class BaseFeature:
                         self.categorys2feature[label] = [self.features[idx]]
             self.labels = np.asarray(self.labels)  # (100000,)
             self.len = len(self.labels)
+            print("{} categorys".format(len(self.categorys2feature.items() ) ))
 
     def get_base_features(self):
         return self.categorys2feature
@@ -51,32 +55,32 @@ class BaseFeature:
             features.append(self.features[idx])
         return features
 
-def generate_model_pairs():
+def generate_model_pairs(path):
     base_feature = BaseFeature()
-    # modle_pairs = ModelPairs()    
+    modle_pairs = []
 
-    for c, c_feature in base_feature.get_base_features().items():
+    for c, c_feature in tqdm(base_feature.get_base_features().items()):
         # for each category c
+        w_list = []  # w* , w0, w0, w0, ...
         Y = np.ones( (len(c_feature),), dtype=np.int16)
         Y = np.append(Y, -np.ones( (M,), dtype=np.int16))
         neg_c_features = base_feature.get_neg_c_random_features(c, M)
         c_feature += neg_c_features
-        # print(features, Y)
 
         # large
-        print('===large===')
+        # print('===large===')
         clf = svm.LinearSVC(max_iter=5000)
-        print(np.asarray(c_feature), Y)
-        print(np.asarray(c_feature).shape, Y.shape)
+        # print(np.asarray(c_feature).shape, Y.shape)
         clf.fit(np.asarray(c_feature), Y)
-        w_star1 = clf.coef_
-        w_star2 = clf.intercept_
-        w_star3 = clf.classes_  # (2,) [-1  1]
-        print(w_star1.shape, w_star1)
-        print(w_star2.shape, w_star2)
+        # w_star1 = clf.coef_
+        # w_star2 = clf.intercept_
+        w_star = np.append(np.append(clf.coef_, clf.intercept_), c)
+        # w_star3 = clf.classes_  # (2,) [-1  1]
+        # print("w_star.shape: ", w_star.shape)
+        w_list.append(w_star)
 
         # small (size = 10)
-        print('===small===')
+        # print('===small===')
         Y_small = np.ones( (N,), dtype=np.int16)
         Y_small = np.append(Y_small, -np.ones( (M,), dtype=np.int16))
         for i in range(S):
@@ -93,16 +97,24 @@ def generate_model_pairs():
 
             for rp in rps:  # regularization parameters
                 clf_small = svm.LinearSVC(max_iter=5000, C=10**rp)
-                print(np.asarray(c_features_small), Y_small)
-                print(np.asarray(c_features_small).shape, Y_small.shape)
+                # print(np.asarray(c_features_small), Y_small)
+                # print(np.asarray(c_features_small).shape, Y_small.shape)
                 clf_small.fit(np.asarray(c_features_small), Y_small)
-                w_0_1 = clf_small.coef_
-                w_0_2 = clf_small.intercept_
-                print(w_0_1.shape, w_0_1)
-                print(w_0_2.shape, w_0_2)
-                print(mean_squared_error(w_star1, w_0_1))
+                # w_0_1 = clf_small.coef_
+                # w_0_2 = clf_small.intercept_
+                w_0 = np.append(np.append(clf_small.coef_, clf_small.intercept_), c)
+                # print('w_0.shape: ', w_0.shape)
+                w_list.append(w_0)
+
+        w_list = np.asarray(w_list)
+        modle_pairs.append(w_list)
+
+    modle_pairs = np.asarray(modle_pairs)
+    print("modle_pairs.shape: ", modle_pairs.shape)
+    np.save(path, modle_pairs)
+
 
 
 if __name__ == '__main__':
     print('Train regression function T')
-    generate_model_pairs()
+    generate_model_pairs('./data/modelpairs.npy')
