@@ -74,7 +74,6 @@ def generate_model_pairs():
         w_star3 = clf.classes_  # (2,) [-1  1]
         print(w_star1.shape, w_star1)
         print(w_star2.shape, w_star2)
-        print(w_star3.shape, w_star3)
 
         # small (size = 10)
         print('===small===')
@@ -97,15 +96,11 @@ def generate_model_pairs():
                 print(np.asarray(c_features_small), Y_small)
                 print(np.asarray(c_features_small).shape, Y_small.shape)
                 clf_small.fit(np.asarray(c_features_small), Y_small)
-                w_0_1 = clf.coef_
-                w_0_2 = clf.intercept_
-                w_0_3 = clf.classes_  # (2,) [-1  1]
+                w_0_1 = clf_small.coef_
+                w_0_2 = clf_small.intercept_
                 print(w_0_1.shape, w_0_1)
                 print(w_0_2.shape, w_0_2)
-                print(w_0_3.shape, w_0_3)
                 print(mean_squared_error(w_star1, w_0_1))
-    return
-
 
 
 if __name__ == '__main__':
