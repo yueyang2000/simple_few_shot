@@ -15,5 +15,9 @@ class mrnLoss(nn.Module):
         return reg_loss
 
 
+def train():
+    pass
+
+
 if __name__ == '__main__':
     pass
