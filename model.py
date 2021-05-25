@@ -62,25 +62,26 @@ def conv_block(in_channels, out_channels):
 
 
 class ProtoNetwork(nn.Module):
-    def __init__(self, x_dim=3, hid_dim=64):
+    def __init__(self, embed_dim=4096):
         super(ProtoNetwork, self).__init__()
-        # self.encoder = nn.Sequential(
-        #     conv_block(x_dim,hid_dim),
-        #     conv_block(hid_dim, hid_dim),
-        #     conv_block(hid_dim, hid_dim),
-        #     conv_block(hid_dim, hid_dim),
-        # )
         self.bb = BackBone(freeze=True)
-        # self.encoder = nn.Sequential(
-        #     nn.Linear(4096, 4096),
-        #     nn.ReLU(),
-        #     nn.Dropout(),
-        #     nn.Linear(4096, 4096)
-        # )
-        self.encoder = nn.Linear(4096, 4096)
+        self.encoder = nn.Sequential(
+            nn.Linear(4096, 4096),
+            nn.BatchNorm1d(4096),
+            # nn.ReLU(),
+            # nn.Dropout(),
+            # nn.Linear(128, 128),
+            # nn.ReLU(),
+            # nn.Dropout(),
+            # nn.Linear(128, 128),
+        )
+        #self.encoder = nn.Linear(4096, 4096)
+
     def forward(self, x):
-        x = self.encoder(self.bb(x))
-        return x.view(x.shape[0], -1)
+        return self.encoder(self.bb(x))
+        
+    def encode(self, x):
+        return self.encoder(x)
 
 
 
