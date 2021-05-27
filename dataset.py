@@ -6,6 +6,7 @@ from torchvision.datasets.vision import VisionDataset
 from torch.utils.data import Dataset
 import random
 from tqdm import tqdm
+import torch
 
 class Caltech256(VisionDataset):
     def __init__(self, root_dir='./data/training', split='train',n_shot=5, transform=None):
@@ -116,7 +117,7 @@ class BaseFeature(Dataset):
             self.feature[label] = np.append(pos, neg, axis=0) 
 
     def __getitem__(self, index):
-        return self.feature[index], self.label
+        return torch.from_numpy(self.feature[index]), torch.from_numpy(self.label)
 
     def __len__(self):
         return 0

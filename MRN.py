@@ -6,30 +6,15 @@ from tqdm import tqdm
 import numpy as np
 
 from model import ModelRegression
-<<<<<<< HEAD
-from dataset import BaseFeature
-=======
 from dataset import ModelPair, BaseFeature
 
 bf = BaseFeature()
->>>>>>> 5e5bd557f1613e2267f2aa65f160e04e917337f3
 
 class mrnLoss(nn.Module):
     def __init__(self, lam=1.0):
         super().__init__()
         self.lam = lam
         self.reg = nn.MSELoss(reduction='sum')
-<<<<<<< HEAD
-    
-    def forward(self, w0, w_star, c):
-        reg_loss = self.reg(w0, w_star)
-        # TODO: performance loss
-        for i in range(w0.shape[0]):
-            # pred = 
-            c_idx = c[i]
-            pass
-        return reg_loss
-=======
 
     def forward(self, w_preds, w_stars, labels):
         reg_loss = self.reg(w_preds, w_stars)
@@ -38,10 +23,8 @@ class mrnLoss(nn.Module):
             label = int(labels[c_id])
             w_pred = w_preds[c_id]
             x, y = bf[label-1]
-            for idx in range(len(x)):
-                perf_loss += 1 - (y[idx]*torch.matmul(w_pred.t(), torch.from_numpy(x[idx]).to(torch.float32)))
+            perf_loss += (1 - torch.sum(x * w_pred, dim=1) * y).sum()
         return reg_loss + self.lam * perf_loss
->>>>>>> 5e5bd557f1613e2267f2aa65f160e04e917337f3
 
 
 def train():
@@ -68,11 +51,10 @@ def train():
             pred = model(w0)
             loss = mrn_loss(pred, w_star, class_index)
             train_loss += loss
-            train_acc += np.sum(np.square(pred.detach().numpy(), w_star.detach().numpy()))
+            train_acc += np.sum(np.square(pred.detach().numpy() - w_star.detach().numpy()))
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-
         print('Loss: {:.6f} - \tAcc: {:.6f}'.format(
             train_loss/len(trainloader), train_acc/len(trainloader)))
         # 保存检查点
