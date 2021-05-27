@@ -119,8 +119,9 @@ class ProtoBatchSampler(object):
 
 
 class BaseFeature:
-    def __init__(self, root_dir='./data/'):
-        self.num_classes = 1000
+    def __init__(self, root_dir='./data/', num_classes=50, n_sample=10):
+        self.num_classes = num_classes
+        self.n_sample = n_sample
         self.data = torch.tensor(np.load(os.path.join(root_dir, 'base_feature.npy')))
         self.labels = []
         if os.path.exists(os.path.join(root_dir, 'base_label.npy')):
@@ -136,18 +137,17 @@ class BaseFeature:
     def __getitem__(self, index: int):
         return self.data[index], self.labels[index]
     
-    def sample_proto_batch(self, n_class, n_support, n_query):
-        choices = self.seed.permutation(self.num_classes)[:n_class]
+    def sample_proto_batch(self, n_support):
         support = []
         query = []
-        for k in choices:
-            indices = np.where(self.labels == k)[0]
+        for k in range(self.num_classes):
+            indices = np.where(self.labels == k)[0][:self.n_sample]
             perm = self.seed.permutation(indices)
-            for s in perm[:n_support]:
-                support.append(self.data[s])
-            for q in perm[n_support:n_support+n_query]:
-                query.append(self.data[q])
-        return torch.stack(support), torch.stack(query)
+            support.append(perm[:n_support])
+            query.append(perm[n_support:])
+        support = np.concatenate(support)
+        query = np.concatenate(query)
+        return torch.tensor(self.data[support]), torch.tensor(self.data[query])
 
 if __name__ == '__main__':
     #dataset = Caltech256()

@@ -66,14 +66,8 @@ class ProtoNetwork(nn.Module):
         super(ProtoNetwork, self).__init__()
         self.bb = BackBone(freeze=True)
         self.encoder = nn.Sequential(
-            nn.Linear(4096, 4096),
-            nn.BatchNorm1d(4096),
-            # nn.ReLU(),
-            # nn.Dropout(),
-            # nn.Linear(128, 128),
-            # nn.ReLU(),
-            # nn.Dropout(),
-            # nn.Linear(128, 128),
+            nn.Linear(4096, embed_dim),
+            nn.BatchNorm1d(embed_dim),
         )
         #self.encoder = nn.Linear(4096, 4096)
 

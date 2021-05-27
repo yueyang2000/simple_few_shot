@@ -10,18 +10,16 @@ from model import ProtoNetwork
 from proto import proto_loss
 
 
-
-
 parser = argparse.ArgumentParser('Prototypical Network Training')
 parser.add_argument('--gpu', type=str, default='0')
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--optim', type=str, default='adam')
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--aug', action='store_true', default=False)
-parser.add_argument('--n_class', type=int, default=30)
+parser.add_argument('--n_class', type=int, default=50)
 parser.add_argument('--n_shot', type=int, default=10)
 parser.add_argument('--n_support', type=int, default=7)
-parser.add_argument('--embed_dim', type=int, default=4096)
+parser.add_argument('--embed_dim', type=int, default=512)
 parser.add_argument('--n_episode', type=int, default=20)
 
 if __name__ == '__main__':
@@ -37,10 +35,12 @@ if __name__ == '__main__':
     train_transform = transforms.Compose([
         transforms.Resize(256),
         transforms.RandomHorizontalFlip(),
-        transforms.CenterCrop(224),
+        transforms.RandomRotation(5),
+        transforms.RandomCrop(224),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
+    
     if args.aug:
         trainset = Caltech256(split='train', transform=train_transform)
     else:
@@ -86,4 +86,3 @@ if __name__ == '__main__':
             if acc > best_acc:
                 best_acc = acc 
     print('Best Acc =', round(best_acc, 4))
-    # Best Acc = 0.72 with n_class=30
