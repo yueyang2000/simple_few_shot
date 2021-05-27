@@ -6,6 +6,8 @@ Few shot learning on Caltech256. Project of *Digital Image Processing (THU 2021)
 
 Download experiment materials and rename the folder to `data`
 
+Download `256_ObjectCategories.tar` in folder `./data/` and extract
+
 Download pretrained AlexNet [checkpoint](https://download.pytorch.org/models/alexnet-owt-4df8aa71.pth) and save it to `pretrained/alexnet-owt-4df8aa71.pth`
 
 ## Contents

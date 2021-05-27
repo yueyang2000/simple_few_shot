@@ -6,9 +6,9 @@ from tqdm import tqdm
 import numpy as np
 
 from model import ModelRegression
-from dataset import ModelPair, BaseFeature
+from dataset import ModelPair, BaseFeatureDataset
 
-bf = BaseFeature()
+bf = BaseFeatureDataset()
 
 class mrnLoss(nn.Module):
     def __init__(self, lam=1.0):
