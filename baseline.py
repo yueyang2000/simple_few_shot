@@ -30,7 +30,7 @@ if __name__ == '__main__':
     X_test, y_test = get_all_features(split='test')
     clf = KNeighborsClassifier(n_neighbors=10)
     clf.fit(X_train, y_train)
-    print('KNN:', clf.score(X_test, y_test)) # 0.212
+    print('KNN:', clf.score(X_test, y_test)) # 0.277
     clf = SVC()
     clf.fit(X_train, y_train)
-    print('SVC:', clf.score(X_test, y_test)) # 0.548
+    print('SVC:', clf.score(X_test, y_test)) # 0.614

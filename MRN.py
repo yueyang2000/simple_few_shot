@@ -6,7 +6,9 @@ from tqdm import tqdm
 import numpy as np
 
 from model import ModelRegression
-from dataset import ModelPair, BaseFeatureDataset
+from dataset import ModelPair, BaseFeatureDataset, Caltech256
+
+from baseline import get_all_features
 
 bf = BaseFeatureDataset()
 
@@ -59,6 +61,18 @@ def train():
             train_loss/len(trainloader), train_acc/len(trainloader)))
         # 保存检查点
         torch.save(model, 'models/epoch{}_checkpoint.pkl'.format(epoch))
+
+
+def test(w0):
+    # w0 [50, 4097] ndarray, sort by class index
+    # class_idx [batch_size], 1 <= item in class_idx <= 1000
+    x_test, y_test = get_all_features(split='test')
+    x_test = np.append(x_test, np.ones((x_test.shape[0], 1)), axis=1) # (1500, 4097)
+    pred = np.argmax(np.matmul(x_test, w0.T), axis=1)
+    total = x_test.shape[0]
+    correct = (pred == y_test).sum().item()
+    acc = correct / total
+    return acc
 
 
 if __name__ == '__main__':
