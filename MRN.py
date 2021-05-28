@@ -37,8 +37,9 @@ def train():
 
     train_data = ModelPair()
     trainloader = DataLoader(dataset=train_data, batch_size=16, shuffle=True)
-    # test_data = Caltech256(split='test')
-    # testloader = torch.utils.data.DataLoader(dataset=test_data, batch_size=len(test_data))
+    test_w0 = np.load("data/Caltech256_w0.npy")
+    x_test, y_test = get_all_features(split='test')
+    x_test = np.append(x_test, np.ones((x_test.shape[0], 1)), axis=1)  # (1500, 4097)
 
     optimizer = torch.optim.Adam(params=model.parameters(), lr=0.0001)
     # best_acc = 0
@@ -59,7 +60,12 @@ def train():
             optimizer.step()
         print('Loss: {:.6f} - \tAcc: {:.6f}'.format(
             train_loss/len(trainloader), train_acc/len(trainloader)))
-        print("test Acc: {:.6f}".format(test(np.load("data/Caltech256_w0.npy"))))
+
+        pred = np.argmax(np.matmul(x_test, model(test_w0).T), axis=1)
+        total = x_test.shape[0]
+        correct = (pred == y_test).sum().item()
+        test_acc = correct / total
+        print("test Acc: {:.6f}".format(test_acc))
         # 保存检查点
         torch.save(model, 'models/epoch{}_checkpoint.pkl'.format(epoch))
 
@@ -74,7 +80,6 @@ def test(w0):
     correct = (pred == y_test).sum().item()
     acc = correct / total
     return acc
-
 
 def refine(wT,):
     epochs = 64
