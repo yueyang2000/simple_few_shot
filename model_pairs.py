@@ -13,6 +13,8 @@ from sklearn.metrics import mean_squared_error
 import argparse
 
 from model import ModelRegression, BackBone
+from dataset import Caltech256
+from baseline import get_all_features
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -113,8 +115,44 @@ def generate_model_pairs(path):
     print("modle_pairs.shape: ", modle_pairs.shape)
     np.save(path, modle_pairs)
 
+def get_w0(path):
+    features, labels = get_all_features(split='train')
+    size = len(labels)
+    idx = 0
+    w_dict = {}  # label : w0
+    while(idx < size):
+        label = labels[idx:idx+10]
+        feature = features[idx:idx+10]
+        idx += 10
+
+
+        Y = np.ones( (feature.shape[0]), dtype=np.int16)
+        Y = np.append(Y, -np.ones( (M,), dtype=np.int16))
+        neg_c_features = []
+        for i in range(M):
+            j = random.randint(0,len(features)-1)
+            while labels[j] == label[0]:
+                j = random.randint(0,len(features)-1)
+            neg_c_features.append(features[j])
+        neg_c_features = np.asarray(neg_c_features)
+
+        feature = np.concatenate((feature,neg_c_features),axis=0)
+
+        clf = svm.LinearSVC(max_iter=5000)
+        # print(feature.shape, Y.shape)
+        clf.fit(feature, Y)
+        w0 = np.append(clf.coef_, clf.intercept_)
+        # print("w0.shape: ", w0.shape)
+        w_dict[label[0]] = w0
+
+    w_list = [(w_dict[k]) for k in sorted(w_dict.keys())]
+
+    w_list = np.asarray(w_list)
+    print("w_list.shape: ", w_list.shape)
+    np.save(path, w_list)
 
 
 if __name__ == '__main__':
     print('Train regression function T')
     generate_model_pairs('./data/modelpairs.npy')
+    # get_w0("./data/Caltech256_w0.npy")
