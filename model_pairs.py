@@ -153,6 +153,7 @@ def get_w0(path):
 
 
 if __name__ == '__main__':
-    print('Train regression function T')
-    generate_model_pairs('./data/modelpairs.npy')
-    # get_w0("./data/Caltech256_w0.npy")
+    # print('Generate modelpairs')
+    # generate_model_pairs('./data/modelpairs.npy')
+    print('Generate Caltech256_w0.npy')
+    get_w0("./data/Caltech256_w0.npy")

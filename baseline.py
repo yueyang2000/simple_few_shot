@@ -9,9 +9,16 @@ from model import BackBone
 from dataset import Caltech256 
 
 net = BackBone()
+dset_train = Caltech256(split='train')
+dset_test = Caltech256(split='test')
+
 
 def get_all_features(split='train', load=True):
-    dset = Caltech256(split=split)
+    if split == 'train':
+        dset = dset_train
+    else:
+        dset = dset_test
+
     path = './data/'+split+'.npy'
     if load and os.path.exists(path):
         return np.load(path), dset.get_labels()

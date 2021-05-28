@@ -59,6 +59,7 @@ def train():
             optimizer.step()
         print('Loss: {:.6f} - \tAcc: {:.6f}'.format(
             train_loss/len(trainloader), train_acc/len(trainloader)))
+        print("test Acc: {:.6f}".format(test(np.load("data/Caltech256_w0.npy"))))
         # 保存检查点
         torch.save(model, 'models/epoch{}_checkpoint.pkl'.format(epoch))
 
