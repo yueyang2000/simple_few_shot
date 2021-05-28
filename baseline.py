@@ -15,7 +15,7 @@ def get_all_features(split='train', load=True):
     path = './data/'+split+'.npy'
     if load and os.path.exists(path):
         return np.load(path), dset.get_labels()
-    
+
     features = []
     for idx in tqdm(range(len(dset))):
         features.append(net(dset[idx][0][None, :]).squeeze().numpy())
