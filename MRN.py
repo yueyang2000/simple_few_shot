@@ -75,5 +75,10 @@ def test(w0):
     return acc
 
 
+def refine(wT,):
+    epochs = 64
+    # TODO
+
+
 if __name__ == '__main__':
     train()
