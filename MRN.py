@@ -36,6 +36,19 @@ class mrnLoss(nn.Module):
             perf_loss += (1 - torch.sum(x * w_pred, dim=1) * y).sum()
         return reg_loss + self.lam * perf_loss
 
+class refineLoss(nn.Module):
+    def __init__(self, eta):
+        super().__init__()
+        self.eta = eta
+        self.reg = nn.MSELoss(reduction='mean')
+
+    def forward(self, model, wT, x, y):
+        w = torch.cat((model.weight.squeeze(), model.bias), dim=0)
+        reg = 0.5 * nn.MSELoss(w, wT)
+        output = model(x)
+        perf = torch.mean(torch.clamp(1 - y * output, min=0))
+        return reg + self.eta * perf
+
 def train(epochs, lr, device):
     # epochs = 50
 
@@ -91,9 +104,20 @@ def test(w0):
     acc = correct / total
     return acc
 
-def refine(wT):
+def refine(wT, c_idx):
     epochs = 64
-    # TODO
+    refine_loss = refineLoss(eta=1.2)
+    model = nn.Linear(4096, 1)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)
+    x_train, y_train = get_all_features(split='train')
+    y_train[np.where(y_train != c_idx)] = -1
+    y_train[np.where(y_train == c_idx)] = 1
+    for epoch in range(epochs):
+        loss = refine_loss(model, wT, x_train, y_train)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        
 
 
 if __name__ == '__main__':
@@ -103,3 +127,13 @@ if __name__ == '__main__':
     epochs, lr = args.epochs, args.lr
 
     train(epochs, lr, device)
+
+    # test accuracy before optimization
+    # test_w0 = np.load("data/Caltech256_w0.npy")
+    # x_test, y_test = get_all_features(split='test')
+    # x_test = np.append(x_test, np.ones((x_test.shape[0], 1)), axis=1)
+    # pred = np.argmax(np.matmul(x_test, test_w0.T), axis=1)
+    # total = x_test.shape[0]
+    # correct = (pred == y_test).sum().item()
+    # test_acc = correct / total
+    # print("test Acc: {:.6f}".format(test_acc))
