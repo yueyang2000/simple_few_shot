@@ -58,16 +58,18 @@ def train():
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+        # 保存检查点
+        torch.save(model, 'models/epoch{}_checkpoint.pkl'.format(epoch))
+
         print('Loss: {:.6f} - \tAcc: {:.6f}'.format(
             train_loss/len(trainloader), train_acc/len(trainloader)))
 
-        pred = np.argmax(np.matmul(x_test, model(test_w0).T), axis=1)
+        model.eval()
+        pred = np.argmax(np.matmul(x_test, model(torch.from_numpy(test_w0).to(torch.float32)).detach().numpy().T), axis=1)
         total = x_test.shape[0]
         correct = (pred == y_test).sum().item()
         test_acc = correct / total
         print("test Acc: {:.6f}".format(test_acc))
-        # 保存检查点
-        torch.save(model, 'models/epoch{}_checkpoint.pkl'.format(epoch))
 
 
 def test(w0):
@@ -75,7 +77,7 @@ def test(w0):
     # class_idx [batch_size], 1 <= item in class_idx <= 1000
     x_test, y_test = get_all_features(split='test')
     x_test = np.append(x_test, np.ones((x_test.shape[0], 1)), axis=1) # (1500, 4097)
-    pred = np.argmax(np.matmul(x_test, w0.T), axis=1)
+    pred = np.argmax(np.matmul(x_test, w0.detach().numpy().T), axis=1)
     total = x_test.shape[0]
     correct = (pred == y_test).sum().item()
     acc = correct / total
