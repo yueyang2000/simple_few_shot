@@ -61,7 +61,7 @@ def train(epochs, lr, device):
             w0 = w0.to(torch.float32).to(device)
             w_star = w_star.to(torch.float32).to(device)
             pred = model(w0)
-            loss = mrn_loss(pred, w_star, class_index)
+            loss = mrn_loss(pred, w_star, class_index, device)
             train_loss += loss
             train_acc += np.sum(np.square(pred.detach().numpy() - w_star.detach().numpy()))
             optimizer.zero_grad()
