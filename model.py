@@ -2,6 +2,7 @@
 
 import torch
 import torch.nn as nn
+from torch.nn.modules.batchnorm import BatchNorm1d
 import torchvision.models as models
 import torchvision
 import os 
@@ -11,7 +12,7 @@ model_urls = {
 }
 
 class BackBone(models.AlexNet):
-    def __init__(self, model_path='./pretrained/alexnet-owt-4df8aa71.pth', freeze=True):
+    def __init__(self, model_path='./pretrained/alexnet-owt-4df8aa71.pth', freeze=True, layer=2):
         super().__init__()
         if os.path.exists(model_path):
             print('Loading local checkpoint')
@@ -23,12 +24,27 @@ class BackBone(models.AlexNet):
         if freeze:
             for param in self.parameters():
                 param.requires_grad = False
-        self.classifier.__delitem__(6)
+        if layer > 0:
+            self.classifier.__delitem__(6)
+        if layer > 1:
+            self.classifier.__delitem__(5)
+            self.classifier.__delitem__(4)
+            self.classifier.__delitem__(3)
+        if layer > 2:
+            self.classifier = None
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        if self.classifier is not None:
+            x = self.classifier(x)
+        return x
 
 class FineTuner(nn.Module):
-    def __init__(self, num_classes=50):
+    def __init__(self, num_classes=50, layer_bb=2):
         super().__init__()
-        self.backbone = BackBone(freeze=False)
+        self.backbone = BackBone(freeze=True, layer=layer_bb)
         self.clf = nn.Linear(4096, num_classes)
     def forward(self, x):
         return self.clf(self.backbone(x))
@@ -38,14 +54,15 @@ class ModelRegression(nn.Module):
     def __init__(self, in_dim=4097):
         super().__init__()
         slope = 0.01 # hyperpara
+        hidden_dim = 512
         self.model = nn.Sequential(
-            nn.Linear(in_dim, 6144),
+            nn.Linear(in_dim, hidden_dim),
             nn.LeakyReLU(slope),
-            nn.Linear(6144, 5120),
+            nn.Linear(hidden_dim, hidden_dim),
             nn.LeakyReLU(slope),
-            nn.Linear(5120, 4097),
+            nn.Linear(hidden_dim, hidden_dim),
             nn.LeakyReLU(slope),
-            nn.Linear(4097, in_dim)
+            nn.Linear(hidden_dim, in_dim)
         )
     
     def forward(self, x):
@@ -67,20 +84,19 @@ def conv_block(in_channels, out_channels):
 
 
 class ProtoNetwork(nn.Module):
-    def __init__(self, embed_dim=4096):
+    def __init__(self, input_dim=4096, embed_dim=4096, layer_bb=2):
         super(ProtoNetwork, self).__init__()
-        self.bb = BackBone(freeze=True)
+        self.bb = BackBone(freeze=True, layer=layer_bb)
         self.encoder = nn.Sequential(
-            nn.Linear(4096, embed_dim),
+            nn.Linear(input_dim, embed_dim),
             nn.BatchNorm1d(embed_dim),
         )
-        #self.encoder = nn.Linear(4096, 4096)
 
     def forward(self, x):
         return self.encoder(self.bb(x))
         
-    def encode(self, x):
-        return self.encoder(x)
+    def backbone_forward(self, x):
+        return self.bb(x)
 
 
 
