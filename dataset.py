@@ -3,6 +3,7 @@ from PIL import Image
 import numpy as np 
 import torch
 from torchvision import transforms
+from torchvision.transforms.functional import hflip, rgb_to_grayscale
 from torchvision.datasets.vision import VisionDataset
 from torch.utils.data import Dataset
 import random
@@ -29,10 +30,13 @@ class Caltech256(VisionDataset):
         else:
             self.transform = transform
         self.seed = np.random.RandomState(0)
+        for i in range(len(self.data)):
+            self.data[i] = self.transform(self.data[i])
+        self.data = torch.stack(self.data)
 
     def _read_all(self, root_dir):
-        self.data = []
-        self.labels = []
+        self.data = [None for _ in range(50)]
+        self.labels = [None for _ in range(50)]
         self.label_names = []
         for dir in os.listdir(root_dir):
             #print(dir)
@@ -50,17 +54,23 @@ class Caltech256(VisionDataset):
                 cls_labels.append(label)
                 if len(cls_data) > 40: break
             if self.split == 'train':
-                self.data += cls_data[:10]
-                self.labels += cls_labels[:10]
+                self.data[label] = cls_data[:10]
+                self.labels[label] = cls_labels[:10]
             else:
-                self.data += cls_data[10:40]
-                self.labels += cls_labels[10:40]
-
-        self.labels = np.asarray(self.labels)
+                self.data[label] = cls_data[10:40]
+                self.labels[label] = cls_labels[10:40]
+        # sort in order
+        data = []
+        labels = []
+        for i in range(50):
+            data += self.data[i]
+            labels += self.labels[i]
+        self.data = data
+        self.labels = torch.tensor(np.asarray(labels))
         
 
     def __getitem__(self, index: int):
-        return self.transform(self.data[index]), self.labels[index]
+        return self.data[index], self.labels[index]
 
     def get(self, class_id, sample_id):
         return self.__getitem__(class_id * self.n_shot + sample_id)
@@ -70,31 +80,113 @@ class Caltech256(VisionDataset):
     
     def get_labels(self):
         return self.labels
-    
-    
-    def sample_proto_batch(self, n_class, n_support):
-        choices = self.seed.permutation(self.num_classes)[:n_class]
-        support = []
-        query = []
-        for k in choices:
-            perm = self.seed.permutation(np.arange(self.n_shot))
-            support_choices = torch.tensor(perm[:n_support])
-            query_choices = torch.tensor(perm[n_support:])
-            for s in support_choices:
-                support.append(self.data[k*self.n_shot + support_choices])
-            for q in query_choices:
-                query.append(self.get(k, q)[0])
-        return torch.stack(support), torch.stack(query)
 
     def full_proto_batch(self):
-        n_sample = len(self.data) // self.num_classes
-        support = []
-        for k in range(self.num_classes):
-            for s in range(n_sample):
-                support.append(self.get(k,s)[0])
-        return torch.stack(support)
+        return self.data 
+    
+class Caltech256Aug(VisionDataset):
+    def __init__(self, root_dir='./data/256_ObjectCategories', split='train'):
+        self.num_classes = 50
+        self.split = split
 
 
+        self._read_all(root_dir)
+        self.transform = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+        data = []
+        labels = []
+        if split == 'train':    
+            for i in range(len(self.data)):
+                data.append(self.transform(self.data[i]))
+                data.append(self.transform(hflip(self.data[i])))
+                data.append(self.transform(rgb_to_grayscale(self.data[i], 3)))
+                data.append(self.transform(rgb_to_grayscale(hflip(self.data[i]), 3)))
+                labels += [self.labels[i],self.labels[i],self.labels[i],self.labels[i]]
+        else:
+            for i in range(len(self.data)):
+                data.append(self.transform(self.data[i]))
+                labels += [self.labels[i]]
+        self.seed = np.random.RandomState(0)
+
+        self.data = torch.stack(data)
+        self.labels = torch.tensor(np.asarray(labels))
+
+    def _read_all(self, root_dir):
+        self.data = [None for _ in range(50)]
+        self.labels = [None for _ in range(50)]
+        self.label_names = []
+        for dir in os.listdir(root_dir):
+            #print(dir)
+            label, name = dir.split('.')
+            label = int(label) - 1
+            if label >= 50:
+                continue
+            self.label_names.append(name)
+            sub_dir = os.path.join(root_dir, dir)
+            cls_data = []
+            cls_labels = []
+            for img_name in os.listdir(sub_dir):
+                img = Image.open(os.path.join(sub_dir, img_name)).copy().convert('RGB')
+                cls_data.append(img)
+                cls_labels.append(label)
+                if len(cls_data) > 40: break
+            if self.split == 'train':
+                self.data[label] = cls_data[:10]
+                self.labels[label] = cls_labels[:10]
+            else:
+                self.data[label] = cls_data[10:40]
+                self.labels[label] = cls_labels[10:40]
+        # sort in order
+        data = []
+        labels = []
+        for i in range(50):
+            data += self.data[i]
+            labels += self.labels[i]
+        self.data = data
+        self.labels = labels
+        
+        
+
+    def __getitem__(self, index: int):
+        return self.data[index], self.labels[index]
+
+    def __len__(self):
+        return len(self.data)
+    
+    def get_labels(self):
+        return self.labels
+
+    def full_proto_batch(self):
+        return self.data 
+
+class Proj2Test(VisionDataset):
+    def __init__(self, root_dir='./data/proj2_test_data'):
+        self.data = [None for _ in range(2500)]
+        self.transform = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+        self._read_all(root_dir)
+
+    def _read_all(self, root_dir):
+        for img_name in os.listdir(root_dir):
+            idx = int(img_name.split('_')[1].split('.')[0]) - 1
+            path = os.path.join(root_dir, img_name)
+            img = Image.open(path).copy().convert('RGB')
+            self.data[idx] = img
+
+    def __getitem__(self, index: int):
+        return self.transform(self.data[index])
+    
+    def __len__(self):
+        return 2500
+        
 class ProtoBatchSampler(object):
     def __init__(self, n_sample, n_support, n_class, n_episode):
         super().__init__()

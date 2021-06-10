@@ -1,7 +1,7 @@
 from random import shuffle
 from torch.optim import optimizer
 from tqdm import tqdm
-from dataset import Caltech256, ProtoBatchSampler, Proj2Test
+from dataset import Caltech256, Caltech256Aug, ProtoBatchSampler, Proj2Test
 import torch 
 import os, argparse, json 
 
@@ -50,8 +50,8 @@ parser.add_argument('--embed_dim', type=int, default=1024)
 parser.add_argument('--n_episode', type=int, default=20)
 parser.add_argument('--loss_type', type=str, default='proto', help='proto/nca')
 parser.add_argument('--dist_type', type=str, default='cosine', help='cosine/euclidean')
-parser.add_argument('--test_bb', action='store_true', default=False, help='test backbone without training')
-parser.add_argument('--layer_bb', type=int, default=2, help='location of hidden feature')
+parser.add_argument('--test_bb', action='store_true', default=False)
+parser.add_argument('--layer_bb', type=int, default=2)
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -62,11 +62,13 @@ if __name__ == '__main__':
 
     n_query = n_shot - n_support
     
-    
+    n_aug = 4
+    n_sample = n_shot * n_aug 
+    n_support = n_support * n_aug
 
-    trainset = Caltech256(split='train')
+    trainset = Caltech256Aug(split='train')
     testset = Caltech256(split='test')
-    sampler = ProtoBatchSampler(n_sample=n_shot, n_class=n_class, n_support=n_support, n_episode=n_episode)
+    sampler = ProtoBatchSampler(n_sample=n_sample, n_class=n_class, n_support=n_support, n_episode=n_episode)
     trainloader =  torch.utils.data.DataLoader(trainset, batch_sampler=sampler, num_workers=4)
     
 
@@ -81,7 +83,7 @@ if __name__ == '__main__':
         with torch.no_grad():
             full_support_embed = []
             for i in range(full_class):
-                support = full_support[i*10:(i+1)*10]
+                support = full_support[i*n_sample:(i+1)*n_sample]
                 support = support.to(device)
                 support_embed = model(support)
                 full_support_embed.append(support_embed)
@@ -146,7 +148,7 @@ if __name__ == '__main__':
             with torch.no_grad():
                 full_support_embed = []
                 for i in range(full_class):
-                    support = full_support[i*10:(i+1)*10]
+                    support = full_support[i*n_sample:(i+1)*n_sample]
                     support = support.to(device)
                     support_embed = model(support)
                     full_support_embed.append(support_embed)

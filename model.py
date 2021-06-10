@@ -7,6 +7,7 @@ import torchvision.models as models
 import torchvision
 import os 
 import torch.nn.functional as F
+
 model_urls = {
     'alexnet': 'https://download.pytorch.org/models/alexnet-owt-4df8aa71.pth',
 }
@@ -70,19 +71,6 @@ class ModelRegression(nn.Module):
         return out
 
 
-def conv_block(in_channels, out_channels):
-    '''
-    return a block conv-bn-relu-pool
-    '''
-    return nn.Sequential(
-        nn.Conv2d(in_channels, out_channels,3, padding=1),
-        nn.BatchNorm2d(out_channels),
-        nn.ReLU(),
-        nn.MaxPool2d(2)
-    )
-
-
-
 class ProtoNetwork(nn.Module):
     def __init__(self, input_dim=4096, embed_dim=4096, layer_bb=2):
         super(ProtoNetwork, self).__init__()
@@ -102,7 +90,6 @@ class ProtoNetwork(nn.Module):
 
 
 if __name__ == '__main__':
-    # bb = BackBone()
-    # x = torch.ones((1,3, 256, 256))
-    # print(bb(x).shape)
-    m = ModelRegression()
+    bb = BackBone()
+    x = torch.ones((1,3, 256, 256))
+    print(bb(x).shape)
